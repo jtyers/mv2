@@ -50,3 +50,7 @@ The script uses the real `mv` and `cp` underneath. Any arguments specified at th
 ## Installation
 
 Currently installation is entirely manual. To install, simply download `mv2` and place in your `PATH`. To use the script to copy, symlink `mv2` to `cp2`, and the script will handle the rest.
+
+## Dependencies
+
+Tested on bash 4.3.46, but should work on earlier versions. Pull requests with patches to support older versions welcome!
