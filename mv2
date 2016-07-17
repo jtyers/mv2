@@ -65,8 +65,8 @@ for i in "$@"; do
 	shift
 done
 
-[ -z ${SOURCES} ] && usage
-[ -z ${DEST} ] && usage
+[ -z "${SOURCES}" ] && usage
+[ -z "${DEST}" ] && usage
 
 DEST_TYPE=""
 
