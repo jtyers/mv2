@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# mv2 - move files, renaming them if necessary to avoid overwrites
+# cp2 - copy files, renaming them if necessary to avoid overwrites
+#
+# usage: mv2 <source> [<source>] [<source>] <dest>
+# usage: cp2 <source> [<source>] [<source>] <dest>
+
+# Copyright (c) 2016, Jonny Tyers
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+set -ex
+
+usage() {
+	echo "Usage: `basename $0` [<args>] <source> [<source>, ...] <dest>"
+	exit 1
+}
+
+case `basename $0` in
+	cp2)
+		MV="cp"
+		;;
+	*)
+		MV="mv"
+		;;
+esac
+
+[ $# -eq 0 ] && usage
+
+declare -a SOURCES
+declare -a MV_ARGS
+
+while [ "${1:0:1}" == "-" ]; do
+	MV_ARGS+=("$1")
+	shift
+done
+
+for i in "$@"; do
+	if [ $# -gt 1 ]; then
+		SOURCES+=($i)
+	else
+		DEST=$i
+	fi
+	shift
+done
+
+[ -z ${SOURCES} ] && usage
+[ -z ${DEST} ] && usage
+
+DEST_TYPE=""
+
+# work out what dest actually is (if it exists)
+if [ -f "$DEST" ]; then
+	DEST_TYPE="file"
+
+elif [ -d "$DEST" ]; then
+	# if DEST is an existing directory mv will move files into that directory
+	DEST_TYPE="dir"
+fi
+
+# move each source file in turn
+for SOURCE in "${SOURCES[@]}"; do
+	# work out what DEST's actual path will be
+	case $DEST_TYPE in
+		file)
+			DEST_PATH="$DEST"
+			;;
+		dir)
+			DEST_PATH="$DEST"/"$SOURCE"
+			;;
+		*)
+			DEST_PATH="$DEST"
+			;;
+	esac
+
+	# http://stackoverflow.com/a/8656874
+	# strip path, if any
+	BASENAME=`basename "$DEST_PATH"`
+	DIRNAME=`dirname "$DEST_PATH"`
+
+	# since we want to handle extensions intelligently we search for an extension
+	HAS_EXT=0
+	if [[ $BASENAME == *"."* ]]; then
+		HAS_EXT=1
+	fi
+
+	[ -f "$DIRNAME/$BASENAME" ] && {
+		n=2
+
+		if [ $HAS_EXT -eq 0 ]; then
+			while [ -f "$DIRNAME/${BASENAME}_${n}" ]; do
+				let n+=1
+			done
+			$MV "${MV_ARGS[@]}" "$SOURCE" "$DIRNAME/${BASENAME}_${n}"
+
+		else
+			while [ -f "$DIRNAME/${BASENAME%.*}_${n}.${BASENAME##*.}" ]; do
+				let n+=1
+			done
+			$MV "${MV_ARGS[@]}" "$SOURCE" "$DIRNAME/${BASENAME%.*}_${n}.${BASENAME##*.}"
+
+		fi
+
+	} || $MV "${MV_ARGS[@]}" "$SOURCE" "$DIRNAME"/"$BASENAME"
+done
