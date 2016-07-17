@@ -87,7 +87,7 @@ for SOURCE in "${SOURCES[@]}"; do
 			DEST_PATH="$DEST"
 			;;
 		dir)
-			DEST_PATH="$DEST"/"$SOURCE"
+			DEST_PATH="$DEST"/`basename "$SOURCE"`
 			;;
 		*)
 			DEST_PATH="$DEST"
