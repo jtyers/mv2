@@ -39,3 +39,14 @@ And it doesn't mess up your file extensions:
 	the_first_file.jpg  the_second_file_2.jpg  the_second_file.jpg
 	$ 
 
+The script uses the real `mv` and `cp` underneath. Any arguments specified at the start of the command line that begin with `-` are passed directly to `mv`/`cp` without modification:
+
+	$ mv2 -v the_first_file.jpg the_second_file.jpg 
+	'the_first_file.jpg' -> './the_second_file_2.jpg'
+	$ 
+
+*NOTE* that the `mv --target` or `mv -t <dir>` argument is not supported by `mv2`
+
+## Installation
+
+Currently installation is entirely manual. To install, simply download `mv2` and place in your `PATH`. To use the script to copy, symlink `mv2` to `cp2`, and the script will handle the rest.
